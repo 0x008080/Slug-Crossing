@@ -17,14 +17,14 @@ const config: Types.Core.GameConfig = {
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_HORIZONTALLY
-    },
+    }, 
     scene: [
         Boot,
         Preloader,
         MainMenu,
         MainGame,
         GameOver
-    ]
+    ] 
 };
 
 export default new Game(config);
