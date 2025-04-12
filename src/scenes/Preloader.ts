@@ -38,22 +38,21 @@ export class Preloader extends Scene
 
         // Load Atlas
         this.load.atlas('player', 'player/playersheet.png', 'JSON/player.json');
+        this.load.atlas('slug', 'slug.png', 'JSON/slug.json');
+        this.load.atlas('mean_slug', 'mean_slug.png', 'JSON/mean_slug.json')
 
         // Load Images
 
         this.load.image('logo', 'slug-crossing.png');
         this.load.image('ground', 'ground.png');
         this.load.image('idle_player', 'player/player.png');
-        this.load.image('slug', 'slug.png');
-
         //this.load.json('theconfig', 'JSON/config.json')
-
+        
     }
 
     create ()
     {
-        this.config = this.cache.json.get('theconfig');
-        // Global Animations
+        //this.config = this.cache.json.get('theconfig');
         
         // Player Animations     
         this.anims.create({
@@ -83,7 +82,28 @@ export class Preloader extends Scene
             }), 
             frameRate: 10,
             repeat: -1,
-        });   
+        }); 
+
+        // Slug Animation
+        this.anims.create({
+            key: 'slugwalk',
+            frames: this.anims.generateFrameNames('slug', {
+                prefix: 'slug', start: 1, end: 4
+            }), 
+            frameRate: 10,
+            repeat: -1,
+        });
+
+        // Mean Slug Animation
+        this.anims.create({
+            key: 'meanslugrunning',
+            frames: this.anims.generateFrameNames('mean_slug', {
+                prefix: 'meanslug_', start: 1, end: 3
+            }), 
+            frameRate: 10,
+            repeat: -1,
+        });
+
 
         this.scene.start('MainMenu');
         //this.scene.start('Game');
