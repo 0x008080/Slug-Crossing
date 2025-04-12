@@ -5,8 +5,11 @@ export class Game extends Scene {
     background: Phaser.GameObjects.TileSprite;
 
     ground: Phaser.Physics.Arcade.StaticGroup;
+    ground_image: Phaser.GameObjects.TileSprite;
+    
     player: Phaser.Physics.Arcade.Sprite;
     mean_slug: Phaser.Physics.Arcade.Sprite;
+    slugs: any;
 
     gravity_y: number = 300;
 
@@ -28,9 +31,11 @@ export class Game extends Scene {
     score_hud: any;
     score: number = 0;
 
+    emitter: any;
+
     space_bar: any;
     jumping: boolean = false;
-    jump_velocity: number = -300;
+    jump_velocity: number = -250;
 
     recent_time: any;
 
@@ -105,15 +110,6 @@ export class Game extends Scene {
         }, 3000);
     }
 
-    updateScore() {
-        this.score += 1;
-
-        this.score_hud = this.add.text(350, 200, this.score.toString(), {
-            fontFamily: 'Arial Black', fontSize: 50, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        });
-    }
 
     jump() {
         this.player.play('jumping');
@@ -122,19 +118,47 @@ export class Game extends Scene {
             this.player.setVelocityY(this.jump_velocity);
             this.recent_time = this.game.getTime();
 
-        } else if (this.player.body?.touching.down == false && ((this.game.getTime() - this.recent_time) > 500) && this.jumping) {
-            this.jumping = false;
+        } else if (this.player.body?.touching.down == false && ((this.game.getTime() - this.recent_time) > 500) && this.jumping == false) {
+            this.jumping = true;
             this.player.setVelocityY(this.jump_velocity);
         }
 
 
         setTimeout(() => {
             this.player.play('running');
-        }, 1500);
+        }, 1750);
+    }
+
+    collectSlug(player: any, slug: any) {
+        
+        //this.emitter.emitParticleAt(this.player.x, this.player.y, 5);
+        slug.destroy();
+
+        this.updateScore();
+    }
+
+    updateScore() {
+        this.score += 1;
+
+        this.score_hud.destroy();
+
+        console.log(this.score);
+        this.score_hud = this.add.text(350, 200, this.score.toString(), {
+            fontFamily: 'Arial Black', fontSize: 50, color: '#ffffff',
+            stroke: '#000000', strokeThickness: 8,
+            align: 'center'
+        });
     }
 
     spawnSlugs() {
+        const slug = this.slugs.create(1000, this.y_axis, 'slug');
+        slug.setGravityY(this.gravity_y).setGravityX(-20);
+        slug.anims.play('slugwalk');
+        this.physics.add.overlap(this.player, slug, this.collectSlug.bind(this), undefined, this);
 
+        setTimeout(()=> {
+            this.spawnSlugs();
+        }, Phaser.Math.Between(3000, 12000));
     }
 
     spawnBushes() {
@@ -152,35 +176,54 @@ export class Game extends Scene {
         this.player = this.physics.add.sprite(100, this.y_axis, 'player').setScale(1.75).refreshBody();
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(this.gravity_y);
-        
+
+        this.emitter = this.add.particles(0, 0, "star",{
+            speed: 240,
+            scale: { start: 1, end: 0 },
+            blendMode: 'ADD',
+            frequency: -1
+        });
 
         this.ground = this.physics.add.staticGroup();
         this.ground.create(0, 1080, 'ground');
         this.physics.add.collider(this.player, this.ground);
 
+        this.ground_image = this.add.tileSprite(0, 1080, 0, 0, 'ground').setInteractive();
+
         this.mean_slug = this.physics.add.sprite(-100, this.y_axis, 'mean_slug').setScale(1.25).refreshBody();
         this.input.on('pointerdown', this.jump, this);
+
+        // Go Slugs
+        this.slugs = this.physics.add.group();
+        this.physics.add.collider(this.slugs, this.ground);
 
         this.score_hud = this.add.text(350, 200, this.score.toString(), {
             fontFamily: 'Arial Black', fontSize: 50, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
-        }).setVisible(false);
+        });
 
         // On Game Start
         this.player.play('running');
-        console.log(this.player.body?.touching.down);
         //this.displayText();
         
         // Testing
         setTimeout(() => { this.startGame() }, 1000);
+        
         // Prod
         //setTimeout(() => { this.startGame() }, 6000);
+        this.spawnSlugs();
     }
 
     update() {
         this.background.tilePositionX += 0.25;
+        this.ground_image.tilePositionX += 0.5;
+
+        if(this.player.body?.touching.down) {
+            this.jumping = false;
+        }
         
+
         
     }
 }
