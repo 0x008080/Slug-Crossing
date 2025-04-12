@@ -2,6 +2,9 @@ import { Scene } from 'phaser';
 
 export class Preloader extends Scene
 {
+
+    config: any;
+
     constructor ()
     {
         super('Preloader');
@@ -28,19 +31,61 @@ export class Preloader extends Scene
     }
 
     preload ()
+    
     {
-        //  Load the assets for the game - Replace with your own assets
+        // Set Path
         this.load.setPath('assets');
+
+        // Load Atlas
+        this.load.atlas('player', 'player/playersheet.png', 'JSON/player.json');
+
+        // Load Images
+
         this.load.image('logo', 'slug-crossing.png');
-        this.load.image('ground', 'ground-2100x1080.png')
+        this.load.image('ground', 'ground.png');
+        this.load.image('idle_player', 'player/player.png');
+        this.load.image('slug', 'slug.png');
+
+        //this.load.json('theconfig', 'JSON/config.json')
+
     }
 
     create ()
     {
-        //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
-        //  For example, you can define global animations here, so we can use them in other scenes.
+        this.config = this.cache.json.get('theconfig');
+        // Global Animations
+        
+        // Player Animations     
+        this.anims.create({
+            key: 'running',
+            frames: this.anims.generateFrameNames('player', {
+                prefix: 'run', start: 1, end: 6
+            }), 
+            frameRate: 10,
+            repeat: -1,
+        });
 
-        //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
+
+        this.anims.create({
+            key: 'jumping',
+            frames: this.anims.generateFrameNames('player', {
+                prefix: 'jump', start: 1, end: 6
+            }), 
+            frameRate: 10,
+            repeat: -1,
+        });
+
+
+        this.anims.create({
+            key: 'rolling',
+            frames: this.anims.generateFrameNames('player', {
+                prefix: 'roll', start: 1, end: 6
+            }), 
+            frameRate: 10,
+            repeat: -1,
+        });   
+
         this.scene.start('MainMenu');
+        //this.scene.start('Game');
     }
 }
