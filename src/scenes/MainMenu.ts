@@ -24,9 +24,6 @@ export class MainMenu extends Scene {
         this.background = this.add.image(this.bg_x, this.bg_y, 'background');
         this.logo = this.add.image(this.x_half, 275, 'logo').setScale(.35, .35).setInteractive();
 
-
-        this.camera = this.cameras.main;
-
         
         this.idle_player = this.physics.add.sprite(100, 800, 'idle_player').setScale(1.75).refreshBody();
         this.idle_player.setCollideWorldBounds(true);
@@ -37,7 +34,7 @@ export class MainMenu extends Scene {
         this.ground.create(0, 1080, 'ground');
         this.physics.add.collider(this.idle_player, this.ground);
 
-        this.menu = this.add.text(this.x_half, 460, 'Play', {
+        this.menu = this.add.text(this.x_half, 500, 'Play', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'

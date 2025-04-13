@@ -1,15 +1,23 @@
 import { Scene } from 'phaser';
 
+export let GLOBAL_SCORE:number = 0;
+
 export class Game extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.TileSprite;
 
     ground: Phaser.Physics.Arcade.StaticGroup;
     ground_image: Phaser.GameObjects.TileSprite;
-    
+
     player: Phaser.Physics.Arcade.Sprite;
     mean_slug: Phaser.Physics.Arcade.Sprite;
+
     slugs: any;
+    bushes: any;
+    rocks: any;
+    birds: any;
+
+    player_speed: number = 0;
 
     gravity_y: number = 300;
 
@@ -38,6 +46,11 @@ export class Game extends Scene {
     jump_velocity: number = -250;
 
     recent_time: any;
+    
+    bushTimeout: any;
+    rockTimeout: any;
+    birdTimeout: any;
+    slugTimeout: any;
 
     constructor() {
         super('Game');
@@ -48,7 +61,7 @@ export class Game extends Scene {
         this.tweens.add({
             targets: this.player,
             duration: 2000,
-            x: '+=220',
+            x: '+=250',
         });
 
         this.tweens.add({
@@ -104,6 +117,7 @@ export class Game extends Scene {
                     this.text_box_three.destroy();
                     this.text_box_four.destroy();
                     this.score_hud.setVisible(true);
+                    this.started = true;
                     //this.input.on('pointerdown', this.jump, this);
                 }
             })
@@ -114,7 +128,7 @@ export class Game extends Scene {
     jump() {
         this.player.play('jumping');
 
-        if(this.player.body?.touching.down) {
+        if (this.player.body?.touching.down) {
             this.player.setVelocityY(this.jump_velocity);
             this.recent_time = this.game.getTime();
 
@@ -130,8 +144,8 @@ export class Game extends Scene {
     }
 
     collectSlug(player: any, slug: any) {
-        
-        //this.emitter.emitParticleAt(this.player.x, this.player.y, 5);
+
+        this.emitter.emitParticleAt(this.player.x, this.player.y, 5);
         slug.destroy();
 
         this.updateScore();
@@ -139,15 +153,22 @@ export class Game extends Scene {
 
     updateScore() {
         this.score += 1;
+        GLOBAL_SCORE = this.score;
 
         this.score_hud.destroy();
 
-        console.log(this.score);
         this.score_hud = this.add.text(350, 200, this.score.toString(), {
             fontFamily: 'Arial Black', fontSize: 50, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         });
+    }
+
+    destroyRock(player: any, rock: any) {
+            this.player_speed = 0;
+            this.player.x -= 100;
+            this.player.setVelocityX(this.player_speed);
+        rock.destroy();
     }
 
     spawnSlugs() {
@@ -156,29 +177,65 @@ export class Game extends Scene {
         slug.anims.play('slugwalk');
         this.physics.add.overlap(this.player, slug, this.collectSlug.bind(this), undefined, this);
 
-        setTimeout(()=> {
+       this.slugTimeout = setTimeout(() => {
             this.spawnSlugs();
         }, Phaser.Math.Between(3000, 12000));
     }
 
     spawnBushes() {
+        const num: number = Phaser.Math.Between(1, 2);
 
+        const bush = this.bushes.create(1000, this.y_axis, `bush_${num.toString()}`);
+        bush.setGravityY(this.gravity_y).setGravityX(-10);
+        bush.setDepth(0);
+
+        this.bushTimeout = setTimeout(() => {
+            this.spawnBushes();
+        }, Phaser.Math.Between(3000, 20000));
     }
 
     spawnBirds() {
 
     }
 
+    spawnRocks() {
+        const num: number = Phaser.Math.Between(1, 2);
+        const rock = this.rocks.create(1000, this.y_axis, `rock_${num.toString()}`)
+        rock.setGravityY(this.gravity_y).setGravityX(-15).setScale(0.02);
+        this.physics.add.overlap(this.player, rock, this.destroyRock.bind(this), undefined, this);
+
+        this.rockTimeout = setTimeout(() => {
+            this.spawnRocks();
+        }, Phaser.Math.Between(1000, 5000));
+    }
+
+    endGame() {
+        this.slugs.destroy();
+        this.rocks.destroy();
+        this.bushes.destroy();
+
+        clearTimeout(this.bushTimeout);
+        clearTimeout(this.slugTimeout);
+        clearTimeout(this.rockTimeout);
+
+        GLOBAL_SCORE = this.score;
+
+        this.scene.start('GameOver');
+    }
+
     create() {
         this.camera = this.cameras.main;
         this.background = this.add.tileSprite(this.bg_x, this.bg_y, 0, 0, 'background').setInteractive();
 
-        this.player = this.physics.add.sprite(100, this.y_axis, 'player').setScale(1.75).refreshBody();
+        this.player = this.physics.add.sprite(100, this.y_axis - 20, 'player').setScale(2).refreshBody();
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(this.gravity_y);
+        this.player.setDepth(1);
+        this.player.body?.setSize(20, 42);
+        this.player.body?.setOffset(10, 5);
 
-        this.emitter = this.add.particles(0, 0, "star",{
-            speed: 240,
+        this.emitter = this.add.particles(0, 0, 'star', {
+            speed: 200,
             scale: { start: 1, end: 0 },
             blendMode: 'ADD',
             frequency: -1
@@ -190,12 +247,26 @@ export class Game extends Scene {
 
         this.ground_image = this.add.tileSprite(0, 1080, 0, 0, 'ground').setInteractive();
 
-        this.mean_slug = this.physics.add.sprite(-100, this.y_axis, 'mean_slug').setScale(1.25).refreshBody();
+        this.mean_slug = this.physics.add.sprite(-100, this.y_axis, 'mean_slug').setScale(1.25).refreshBody().setDepth(1);
+        this.physics.add.collider(this.player, this.mean_slug);
         this.input.on('pointerdown', this.jump, this);
 
         // Go Slugs
         this.slugs = this.physics.add.group();
         this.physics.add.collider(this.slugs, this.ground);
+
+        // Bushes
+        this.bushes = this.physics.add.group();
+        this.physics.add.collider(this.bushes, this.ground);
+
+        // Rocks
+        this.rocks = this.physics.add.group();
+        this.physics.add.collider(this.rocks, this.ground);
+
+        // Bird
+        this.birds = this.physics.add.group();
+        this.physics.add.collider(this.birds, this.ground);
+
 
         this.score_hud = this.add.text(350, 200, this.score.toString(), {
             fontFamily: 'Arial Black', fontSize: 50, color: '#ffffff',
@@ -206,24 +277,39 @@ export class Game extends Scene {
         // On Game Start
         this.player.play('running');
         //this.displayText();
-        
+
         // Testing
+        this.started = true;
         setTimeout(() => { this.startGame() }, 1000);
-        
+
         // Prod
         //setTimeout(() => { this.startGame() }, 6000);
         this.spawnSlugs();
+        this.spawnBushes();
+        this.spawnRocks();
     }
 
     update() {
+
         this.background.tilePositionX += 0.25;
         this.ground_image.tilePositionX += 0.5;
 
-        if(this.player.body?.touching.down) {
+        if (this.player.body?.touching.down) {
             this.jumping = false;
         }
-        
 
-        
+        if(this.physics.overlap(this.player, this.mean_slug) == true) {
+            this.endGame();
+        }
+
+        if(this.player.x < 320) {
+            this.player.setVelocityX(this.player_speed);
+            this.player_speed += 0.05;
+        } else {
+            this.player_speed = 0;
+            this.player.setVelocityX(this.player_speed);
+        }
     }
 }
+
+export default GLOBAL_SCORE;
