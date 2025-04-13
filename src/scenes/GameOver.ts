@@ -1,9 +1,8 @@
 import { Scene } from 'phaser';
-import GLOBAL_SCORE from './Game';
-import { MainMenu } from './MainMenu';
 
-export class GameOver extends Scene
-{
+export class GameOver extends Scene {
+    private score: number = 0;
+    
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
     ground: Phaser.GameObjects.Image;
@@ -14,14 +13,17 @@ export class GameOver extends Scene
 
     bg_x: number = 512;
     bg_y: number = 384;
-    constructor ()
-    {
+
+    init(data: {score: number}) {
+        this.score = data.score;
+    }
+
+    constructor() {
         super('GameOver');
     }
 
-    create ()
-    {
- 
+    create() {
+
         this.camera = this.cameras.main;
         this.background = this.add.image(this.bg_x, this.bg_y, 'background');
 
@@ -35,7 +37,7 @@ export class GameOver extends Scene
 
         this.gameover_text.setOrigin(0.5);
 
-        this.score_text = this.add.text(360, 484, `Final Score ${GLOBAL_SCORE}`, {
+        this.score_text = this.add.text(360, 484, `Final Score ${this.score}`, {
             fontFamily: 'Arial Black', fontSize: 48, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
@@ -50,6 +52,8 @@ export class GameOver extends Scene
         }).setOrigin(0.5).setInteractive();
 
         this.menu_text.once('pointerdown', () => {
+            this.scene.stop('Game');
+            
             this.scene.start('MainMenu');
         })
     }

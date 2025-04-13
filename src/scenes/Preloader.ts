@@ -117,8 +117,11 @@ export class Preloader extends Scene {
             repeat: -1,
         });
 
-        //this.scene.start('GameOver');
+        // Prod
         this.scene.start('MainMenu');
+        // Testing
+        //this.scene.start('Credits')
+        //this.scene.start('GameOver');
         //this.scene.start('Game');
     }
 }

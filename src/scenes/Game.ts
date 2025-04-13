@@ -1,7 +1,5 @@
 import { Scene } from 'phaser';
 
-export let GLOBAL_SCORE:number = 0;
-
 export class Game extends Scene {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.TileSprite;
@@ -26,7 +24,7 @@ export class Game extends Scene {
     started: boolean = false;
     y_axis: number = 812;
 
-    txt_instructions_one: string = "TAP screen to \njump and avoid obstacles";
+    txt_instructions_one: string = "TAP screen to \njump and avoid ROCKS";
     txt_instructions_two: string = "Collect as many";
     txt_instructions_three: string = "Banana Slugs";
     txt_instructions_four: string = "as you can";
@@ -37,13 +35,13 @@ export class Game extends Scene {
     text_box_four: any;
 
     score_hud: any;
-    score: number = 0;
+    private score: number = 0;
 
     emitter: any;
 
     space_bar: any;
     jumping: boolean = false;
-    jump_velocity: number = -250;
+    jump_velocity: number = -215;
 
     recent_time: any;
     
@@ -51,6 +49,11 @@ export class Game extends Scene {
     rockTimeout: any;
     birdTimeout: any;
     slugTimeout: any;
+    playTimeout: any;
+    
+    init() {
+        this.score = 0;
+    }
 
     constructor() {
         super('Game');
@@ -61,7 +64,7 @@ export class Game extends Scene {
         this.tweens.add({
             targets: this.player,
             duration: 2000,
-            x: '+=250',
+            x: '+=160',
         });
 
         this.tweens.add({
@@ -117,6 +120,7 @@ export class Game extends Scene {
                     this.text_box_three.destroy();
                     this.text_box_four.destroy();
                     this.score_hud.setVisible(true);
+                    this.score = 0;
                     this.started = true;
                     //this.input.on('pointerdown', this.jump, this);
                 }
@@ -153,7 +157,6 @@ export class Game extends Scene {
 
     updateScore() {
         this.score += 1;
-        GLOBAL_SCORE = this.score;
 
         this.score_hud.destroy();
 
@@ -165,9 +168,16 @@ export class Game extends Scene {
     }
 
     destroyRock(player: any, rock: any) {
+            this.player.anims.play('rolling');
+
             this.player_speed = 0;
             this.player.x -= 100;
             this.player.setVelocityX(this.player_speed);
+
+            setTimeout(() => {
+               this.playTimeout = this.player.anims.play('running');
+            }, 1100);
+
         rock.destroy();
     }
 
@@ -201,12 +211,12 @@ export class Game extends Scene {
     spawnRocks() {
         const num: number = Phaser.Math.Between(1, 2);
         const rock = this.rocks.create(1000, this.y_axis, `rock_${num.toString()}`)
-        rock.setGravityY(this.gravity_y).setGravityX(-15).setScale(0.02);
+        rock.setGravityY(this.gravity_y).setGravityX(-30).setScale(0.023);
         this.physics.add.overlap(this.player, rock, this.destroyRock.bind(this), undefined, this);
 
         this.rockTimeout = setTimeout(() => {
             this.spawnRocks();
-        }, Phaser.Math.Between(1000, 5000));
+        }, Phaser.Math.Between(1000, 5500));
     }
 
     endGame() {
@@ -217,10 +227,9 @@ export class Game extends Scene {
         clearTimeout(this.bushTimeout);
         clearTimeout(this.slugTimeout);
         clearTimeout(this.rockTimeout);
+        clearTimeout(this.playTimeout);
 
-        GLOBAL_SCORE = this.score;
-
-        this.scene.start('GameOver');
+        this.scene.start('GameOver', { score: this.score});
     }
 
     create() {
@@ -247,7 +256,7 @@ export class Game extends Scene {
 
         this.ground_image = this.add.tileSprite(0, 1080, 0, 0, 'ground').setInteractive();
 
-        this.mean_slug = this.physics.add.sprite(-100, this.y_axis, 'mean_slug').setScale(1.25).refreshBody().setDepth(1);
+        this.mean_slug = this.physics.add.sprite(-100, this.y_axis + 5, 'mean_slug').setScale(1.25).refreshBody().setDepth(1);
         this.physics.add.collider(this.player, this.mean_slug);
         this.input.on('pointerdown', this.jump, this);
 
@@ -276,14 +285,14 @@ export class Game extends Scene {
 
         // On Game Start
         this.player.play('running');
-        //this.displayText();
+        this.displayText();
 
         // Testing
-        this.started = true;
-        setTimeout(() => { this.startGame() }, 1000);
+        //this.started = true;
+        //setTimeout(() => { this.startGame() }, 1000);
 
         // Prod
-        //setTimeout(() => { this.startGame() }, 6000);
+        setTimeout(() => { this.startGame() }, 6000);
         this.spawnSlugs();
         this.spawnBushes();
         this.spawnRocks();
@@ -304,12 +313,10 @@ export class Game extends Scene {
 
         if(this.player.x < 320) {
             this.player.setVelocityX(this.player_speed);
-            this.player_speed += 0.05;
+            this.player_speed += 0.03;
         } else {
             this.player_speed = 0;
             this.player.setVelocityX(this.player_speed);
         }
     }
 }
-
-export default GLOBAL_SCORE;
