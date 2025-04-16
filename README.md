@@ -4,4 +4,4 @@ Slug crossing is an interactive browser experience set in 2099. The UC Santa Cru
 
 Try it out down below
 
-[Play](https://0x008080.github.io/Slug-Crossing)
+[Play Slug Crossing](https://0x008080.github.io/Slug-Crossing)
